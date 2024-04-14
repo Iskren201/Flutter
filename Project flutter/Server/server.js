@@ -8,6 +8,7 @@ app.use(express.json());
 
 async function createUsersTable() {
   try {
+    //! to create a new file for creating the table for like (Entity) for userCreate
     const checkQuery = `
       SELECT EXISTS (
         SELECT 1
@@ -34,7 +35,7 @@ async function createUsersTable() {
     throw error;
   }
 }
-
+//! create a new folder for login and register ....
 app.post("/login", async (req, res) => {
   try {
     await createUsersTable();
@@ -82,7 +83,7 @@ app.post("/signup", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-
+//? shoud be only the server start and import evry componnet like loing  register ...
 app.listen(port, async () => {
   try {
     await createUsersTable();

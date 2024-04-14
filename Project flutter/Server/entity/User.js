@@ -10,6 +10,9 @@ class User {
 
   @Column()
   password;
+
+  @Column()
+  gmail;
 }
 
 module.exports = User;
