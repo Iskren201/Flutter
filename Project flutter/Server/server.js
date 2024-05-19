@@ -35,7 +35,71 @@ async function createUsersTable() {
     throw error;
   }
 }
+
+// async function createTasksTable() {
+//   try {
+//     const checkQuery = `
+//       SELECT EXISTS (
+//         SELECT 1
+//         FROM information_schema.tables
+//         WHERE table_name = 'tasks'
+//       );
+//     `;
+//     const { rows } = await dbClient.query(checkQuery);
+//     const tableExists = rows[0].exists;
+
+//     if (!tableExists) {
+//       const createQuery = `
+//         CREATE TABLE tasks (
+//           id SERIAL PRIMARY KEY,
+//           title VARCHAR(255) NOT NULL,
+//           description TEXT,
+//           status BOOLEAN DEFAULT false,
+//           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+//         )
+//       `;
+//       await dbClient.query(createQuery);
+//       console.log("Tasks table created successfully");
+//     }
+//   } catch (error) {
+//     console.error("Error creating tasks table:", error);
+//     throw error;
+//   }
+// }
+
 //! create a new folder for login and register ....
+
+async function createTasksTable() {
+  try {
+    const checkQuery = `
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_name = 'tasks'
+      );
+    `;
+    const { rows } = await dbClient.query(checkQuery);
+    const tableExists = rows[0].exists;
+
+    if (!tableExists) {
+      const createQuery = `
+        CREATE TABLE tasks (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(255) NOT NULL,
+          description TEXT,
+          is_done BOOLEAN DEFAULT false,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `;
+      await dbClient.query(createQuery);
+      console.log("Tasks table created successfully");
+    }
+  } catch (error) {
+    console.error("Error creating tasks table:", error);
+    throw error;
+  }
+}
+
 app.post("/login", async (req, res) => {
   try {
     await createUsersTable();
@@ -83,6 +147,46 @@ app.post("/signup", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+app.post("/tasks", async (req, res) => {
+  try {
+    const { title, description } = req.body;
+    const insertQuery =
+      "INSERT INTO tasks (title, description) VALUES ($1, $2) RETURNING *";
+    const result = await dbClient.query(insertQuery, [title, description]);
+    res.json({ success: true, task: result.rows[0] });
+  } catch (error) {
+    console.error("Error adding task:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Endpoint to retrieve all tasks
+app.get("/tasks", async (req, res) => {
+  try {
+    const result = await dbClient.query("SELECT * FROM tasks");
+    res.json({ success: true, tasks: result.rows });
+  } catch (error) {
+    console.error("Error retrieving tasks:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Endpoint to update a task's status
+app.put("/tasks/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const updateQuery =
+      "UPDATE tasks SET status = $1 WHERE id = $2 RETURNING *";
+    const result = await dbClient.query(updateQuery, [status, id]);
+    res.json({ success: true, task: result.rows[0] });
+  } catch (error) {
+    console.error("Error updating task status:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 //? shoud be only the server start and import evry componnet like loing  register ...
 app.listen(port, async () => {
   try {

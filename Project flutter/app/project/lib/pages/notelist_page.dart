@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:project/service/api_service.dart';
 import 'notelistDone_page.dart';
 
 class NoteList extends StatefulWidget {
@@ -9,7 +10,15 @@ class NoteList extends StatefulWidget {
 }
 
 class _NoteListState extends State<NoteList> {
-  bool _showDoneNotes = false; // Track whether to show done notes
+  bool _showDoneNotes = false;
+  late Future<List<Task>> futureTasks;
+  final ApiService apiService = ApiService();
+
+  @override
+  void initState() {
+    super.initState();
+    futureTasks = apiService.fetchTasks();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +30,7 @@ class _NoteListState extends State<NoteList> {
             icon: Icon(Icons.done_all),
             onPressed: () {
               setState(() {
-                _showDoneNotes = !_showDoneNotes; // Toggle the state
+                _showDoneNotes = !_showDoneNotes;
               });
             },
           ),
@@ -30,115 +39,62 @@ class _NoteListState extends State<NoteList> {
       body: Column(
         children: [
           Expanded(
-            child: _buildNoteList(),
-          ),
-          if (_showDoneNotes) ...[
-            Divider(),
-            Expanded(
-              child: DoneNoteList(),
+            child: FutureBuilder<List<Task>>(
+              future: futureTasks,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(child: Text('No tasks available'));
+                } else {
+                  final tasks = snapshot.data!;
+                  return ListView.builder(
+                    itemCount: tasks.length,
+                    itemBuilder: (context, index) {
+                      final task = tasks[index];
+                      if (_showDoneNotes == task.status) {
+                        return ListTile(
+                          leading: CircleAvatar(child: Text(task.title[0])),
+                          title: Text(task.title),
+                          subtitle: Text(task.description),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: Icon(Icons.check_circle),
+                                onPressed: () async {
+                                  await apiService.updateTaskStatus(
+                                      task.id, !task.status);
+                                  setState(() {
+                                    futureTasks = apiService.fetchTasks();
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                        );
+                      } else {
+                        return Container();
+                      }
+                    },
+                  );
+                }
+              },
             ),
-          ],
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await apiService.addTask('New Task', 'Task Description');
+              setState(() {
+                futureTasks = apiService.fetchTasks();
+              });
+            },
+            child: Text('Add Task'),
+          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildNoteList() {
-    return ListView(
-      children: <Widget>[
-        ListTile(
-          leading: CircleAvatar(child: Text('A')),
-          title: Text('Headline'),
-          subtitle: Text('Supporting text'),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: Icon(Icons.edit),
-                onPressed: () {
-                  // Implement edit functionality
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.delete),
-                onPressed: () {
-                  // Implement delete functionality
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.check_circle),
-                onPressed: () {
-                  // Implement mark as done functionality
-                },
-              ),
-            ],
-          ),
-        ),
-        Divider(height: 0),
-        ListTile(
-          leading: CircleAvatar(child: Text('B')),
-          title: Text('Headline'),
-          subtitle: Text(
-            'Longer supporting text to demonstrate how the text wraps and how the leading and trailing widgets are centered vertically with the text.',
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: Icon(Icons.edit),
-                onPressed: () {
-                  // Implement edit functionality
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.delete),
-                onPressed: () {
-                  // Implement delete functionality
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.check_circle),
-                onPressed: () {
-                  // Implement mark as done functionality
-                },
-              ),
-            ],
-          ),
-        ),
-        Divider(height: 0),
-        ListTile(
-          leading: CircleAvatar(child: Text('C')),
-          title: Text('Headline'),
-          subtitle: Text(
-            "Longer supporting text to demonstrate how the text wraps and how setting 'ListTile.isThreeLine = true' aligns leading and trailing widgets to the top vertically with the text.",
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: Icon(Icons.edit),
-                onPressed: () {
-                  // Implement edit functionality
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.delete),
-                onPressed: () {
-                  // Implement delete functionality
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.check_circle),
-                onPressed: () {
-                  // Implement mark as done functionality
-                },
-              ),
-            ],
-          ),
-          isThreeLine: true,
-        ),
-        Divider(height: 0),
-      ],
     );
   }
 }
