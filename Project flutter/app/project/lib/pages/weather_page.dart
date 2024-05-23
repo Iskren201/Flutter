@@ -12,17 +12,25 @@ class WeatherPage extends StatefulWidget {
 class _WeatherPageState extends State<WeatherPage> {
   final _weatherService = WeatherService('9de4a0fe9da26f7a0fedfc944406d24d');
   Weather? _weather;
+  String _errorMessage = '';
 
   _fetchWeather() async {
-    String cityName = await _weatherService.getCurrentCity();
-
+    setState(() {
+      _errorMessage = '';
+    });
     try {
+      String cityName = await _weatherService.getCurrentCity();
+      if (cityName.isEmpty) {
+        throw Exception('Could not determine the current city.');
+      }
       final weather = await _weatherService.getWeather(cityName);
       setState(() {
         _weather = weather;
       });
     } catch (e) {
-      print(e);
+      setState(() {
+        _errorMessage = 'Failed to load weather data: ${e.toString()}';
+      });
     }
   }
 
@@ -39,28 +47,36 @@ class _WeatherPageState extends State<WeatherPage> {
         title: Text('Weather'),
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              _weather?.cityName ?? 'Loading city ...',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.blue,
-              ),
-            ),
-            SizedBox(height: 16),
-            Text(
-              '${_weather?.temperature.round() ?? ''}°C',
-              style: TextStyle(
-                fontSize: 20,
-                color: Colors.blueAccent,
-              ),
-            ),
-            SizedBox(height: 24),
-          ],
-        ),
+        child: _weather == null && _errorMessage.isEmpty
+            ? CircularProgressIndicator()
+            : _errorMessage.isNotEmpty
+                ? Text(
+                    _errorMessage,
+                    style: TextStyle(color: Colors.red, fontSize: 16),
+                    textAlign: TextAlign.center,
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _weather?.cityName ?? 'Unknown City',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        '${_weather?.temperature.round() ?? ''}°C',
+                        style: TextStyle(
+                          fontSize: 20,
+                          color: Colors.blueAccent,
+                        ),
+                      ),
+                      SizedBox(height: 24),
+                    ],
+                  ),
       ),
     );
   }

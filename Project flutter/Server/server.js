@@ -8,7 +8,6 @@ app.use(express.json());
 
 async function createUsersTable() {
   try {
-    //! to create a new file for creating the table for like (Entity) for userCreate
     const checkQuery = `
       SELECT EXISTS (
         SELECT 1
@@ -35,39 +34,6 @@ async function createUsersTable() {
     throw error;
   }
 }
-
-// async function createTasksTable() {
-//   try {
-//     const checkQuery = `
-//       SELECT EXISTS (
-//         SELECT 1
-//         FROM information_schema.tables
-//         WHERE table_name = 'tasks'
-//       );
-//     `;
-//     const { rows } = await dbClient.query(checkQuery);
-//     const tableExists = rows[0].exists;
-
-//     if (!tableExists) {
-//       const createQuery = `
-//         CREATE TABLE tasks (
-//           id SERIAL PRIMARY KEY,
-//           title VARCHAR(255) NOT NULL,
-//           description TEXT,
-//           status BOOLEAN DEFAULT false,
-//           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-//         )
-//       `;
-//       await dbClient.query(createQuery);
-//       console.log("Tasks table created successfully");
-//     }
-//   } catch (error) {
-//     console.error("Error creating tasks table:", error);
-//     throw error;
-//   }
-// }
-
-//! create a new folder for login and register ....
 
 async function createTasksTable() {
   try {
@@ -100,14 +66,14 @@ async function createTasksTable() {
   }
 }
 
+async function setupDatabase() {
+  await createUsersTable();
+  await createTasksTable();
+}
+
 app.post("/login", async (req, res) => {
   try {
-    await createUsersTable();
-
     const { username, password } = req.body;
-    console.log("Received username:", username);
-    console.log("Received password:", password);
-
     const query = "SELECT * FROM users WHERE username = $1 AND password = $2";
     const result = await dbClient.query(query, [username, password]);
     if (result.rows.length > 0) {
@@ -161,7 +127,6 @@ app.post("/tasks", async (req, res) => {
   }
 });
 
-// Endpoint to retrieve all tasks
 app.get("/tasks", async (req, res) => {
   try {
     const result = await dbClient.query("SELECT * FROM tasks");
@@ -172,13 +137,12 @@ app.get("/tasks", async (req, res) => {
   }
 });
 
-// Endpoint to update a task's status
 app.put("/tasks/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
     const updateQuery =
-      "UPDATE tasks SET status = $1 WHERE id = $2 RETURNING *";
+      "UPDATE tasks SET is_done = $1 WHERE id = $2 RETURNING *";
     const result = await dbClient.query(updateQuery, [status, id]);
     res.json({ success: true, task: result.rows[0] });
   } catch (error) {
@@ -187,10 +151,9 @@ app.put("/tasks/:id", async (req, res) => {
   }
 });
 
-//? shoud be only the server start and import evry componnet like loing  register ...
 app.listen(port, async () => {
   try {
-    await createUsersTable();
+    await setupDatabase();
     console.log(`Server is running on http://localhost:${port}`);
   } catch (error) {
     console.error("Error starting server:", error);

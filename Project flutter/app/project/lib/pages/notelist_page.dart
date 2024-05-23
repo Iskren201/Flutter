@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:project/service/api_service.dart';
-import 'notelistDone_page.dart';
+import 'new_task_page.dart';
 
 class NoteList extends StatefulWidget {
   const NoteList({Key? key}) : super(key: key);
@@ -20,6 +20,12 @@ class _NoteListState extends State<NoteList> {
     futureTasks = apiService.fetchTasks();
   }
 
+  Future<void> _refreshTasks() async {
+    setState(() {
+      futureTasks = apiService.fetchTasks();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -31,6 +37,7 @@ class _NoteListState extends State<NoteList> {
             onPressed: () {
               setState(() {
                 _showDoneNotes = !_showDoneNotes;
+                futureTasks = apiService.fetchTasks();
               });
             },
           ),
@@ -54,7 +61,7 @@ class _NoteListState extends State<NoteList> {
                     itemCount: tasks.length,
                     itemBuilder: (context, index) {
                       final task = tasks[index];
-                      if (_showDoneNotes == task.status) {
+                      if (_showDoneNotes == task.isDone) {
                         return ListTile(
                           leading: CircleAvatar(child: Text(task.title[0])),
                           title: Text(task.title),
@@ -63,10 +70,12 @@ class _NoteListState extends State<NoteList> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: Icon(Icons.check_circle),
+                                icon: Icon(task.isDone
+                                    ? Icons.undo
+                                    : Icons.check_circle),
                                 onPressed: () async {
                                   await apiService.updateTaskStatus(
-                                      task.id, !task.status);
+                                      task.id, !task.isDone);
                                   setState(() {
                                     futureTasks = apiService.fetchTasks();
                                   });
@@ -86,10 +95,15 @@ class _NoteListState extends State<NoteList> {
           ),
           ElevatedButton(
             onPressed: () async {
-              await apiService.addTask('New Task', 'Task Description');
-              setState(() {
-                futureTasks = apiService.fetchTasks();
-              });
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => NewTaskPage()),
+              );
+
+              // If a new task was created, refresh the task list
+              if (result == true) {
+                _refreshTasks();
+              }
             },
             child: Text('Add Task'),
           ),
