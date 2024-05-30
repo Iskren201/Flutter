@@ -1,6 +1,10 @@
+// In weather_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:project/module/weather_mode.dart';
 import 'package:project/service/weather_service.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:geolocator/geolocator.dart';
 
 class WeatherPage extends StatefulWidget {
   const WeatherPage({Key? key}) : super(key: key);
@@ -10,22 +14,47 @@ class WeatherPage extends StatefulWidget {
 }
 
 class _WeatherPageState extends State<WeatherPage> {
-  final _weatherService = WeatherService('9de4a0fe9da26f7a0fedfc944406d24d');
+  final _weatherService = WeatherService('d34f0f549e81cb5095d21303c5119c55');
   Weather? _weather;
   String _errorMessage = '';
 
-  _fetchWeather() async {
+  Future<void> _checkPermissions() async {
+    final status = await Permission.location.request();
+    if (status.isGranted) {
+      _fetchWeather();
+    } else if (status.isDenied) {
+      setState(() {
+        _errorMessage = 'Location permission denied';
+      });
+    } else if (status.isPermanentlyDenied) {
+      setState(() {
+        _errorMessage = 'Location permission permanently denied';
+      });
+    }
+  }
+
+  Future<void> _fetchWeather() async {
     setState(() {
       _errorMessage = '';
     });
     try {
-      String cityName = await _weatherService.getCurrentCity();
-      if (cityName.isEmpty) {
-        throw Exception('Could not determine the current city.');
-      }
-      final weather = await _weatherService.getWeather(cityName);
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      final weather = await _weatherService.getWeatherByCoordinates(
+        position.latitude,
+        position.longitude,
+      );
       setState(() {
         _weather = weather;
+      });
+    } on PermissionDeniedException catch (e) {
+      setState(() {
+        _errorMessage = 'Location permission denied: ${e.toString()}';
+      });
+    } on LocationServiceDisabledException catch (e) {
+      setState(() {
+        _errorMessage = 'Location services disabled: ${e.toString()}';
       });
     } catch (e) {
       setState(() {
@@ -37,7 +66,7 @@ class _WeatherPageState extends State<WeatherPage> {
   @override
   void initState() {
     super.initState();
-    _fetchWeather();
+    _checkPermissions();
   }
 
   @override

@@ -1,3 +1,4 @@
+import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
 import 'notelist_page.dart';
 import 'weather_page.dart';
@@ -13,32 +14,24 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  int _selectedIndex = 0;
-
-  void _onItemSelected(int index) {
-    setState(() {
-      _selectedIndex = index;
-      if (_selectedIndex == 3) {
-        _logout(context);
-      }
-    });
-
-    if (_selectedIndex == 1) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => WeatherPage()),
-      );
-    } else if (_selectedIndex == 0) {
+  void _navigateTo(int index) {
+    if (index == 0) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => NoteList()),
       );
-    } else if (_selectedIndex == 2) {
-      // Navigate to settings page
+    } else if (index == 1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => WeatherPage()),
+      );
+    } else if (index == 2) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => SettingsPage()),
       );
+    } else if (index == 3) {
+      _logout(context);
     }
   }
 
@@ -57,70 +50,59 @@ class _HomeState extends State<Home> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Welcome, ${widget.username}!'),
+            AnimatedTextKit(
+              animatedTexts: [
+                TypewriterAnimatedText(
+                  'Welcome, ${widget.username}!',
+                  textStyle: const TextStyle(
+                    fontSize: 32.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  speed: const Duration(milliseconds: 100),
+                ),
+              ],
+              totalRepeatCount: 1,
+              pause: const Duration(milliseconds: 1000),
+              displayFullTextOnTap: true,
+              stopPauseOnTap: true,
+            ),
+            SizedBox(height: 20),
+            Wrap(
+              spacing: 20,
+              children: [
+                ElevatedButton.icon(
+                  icon: Icon(Icons.note),
+                  label: Text('Notes'),
+                  onPressed: () {
+                    _navigateTo(0);
+                  },
+                ),
+                ElevatedButton.icon(
+                  icon: Icon(Icons.wb_sunny),
+                  label: Text('Weather'),
+                  onPressed: () {
+                    _navigateTo(1);
+                  },
+                ),
+                ElevatedButton.icon(
+                  icon: Icon(Icons.settings),
+                  label: Text('Settings'),
+                  onPressed: () {
+                    _navigateTo(2);
+                  },
+                ),
+                ElevatedButton.icon(
+                  icon: Icon(Icons.exit_to_app),
+                  label: Text('Logout'),
+                  onPressed: () {
+                    _logout(context);
+                  },
+                ),
+              ],
+            ),
           ],
         ),
       ),
-      bottomNavigationBar: NavigationComponent(
-        selectedIndex: _selectedIndex,
-        onItemSelected: _onItemSelected,
-        items: [
-          NavigationItem(
-            icon: Icon(Icons.note),
-            label: 'Notes',
-          ),
-          NavigationItem(
-            icon: Icon(Icons.wb_sunny),
-            label: 'Weather',
-          ),
-          NavigationItem(
-            icon: Icon(Icons.settings), // Add icon for settings
-            label: 'Settings', // Change label to 'Settings'
-          ),
-          NavigationItem(
-            icon: Icon(Icons.exit_to_app),
-            label: 'Logout',
-          ),
-        ],
-      ),
     );
   }
-}
-
-class NavigationComponent extends StatelessWidget {
-  final List<NavigationItem> items;
-  final int selectedIndex;
-  final Function(int) onItemSelected;
-
-  const NavigationComponent({
-    required this.items,
-    required this.selectedIndex,
-    required this.onItemSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: selectedIndex,
-      onTap: onItemSelected,
-      items: items.map((item) {
-        return BottomNavigationBarItem(
-          icon: item.icon,
-          label: item.label,
-        );
-      }).toList(),
-      selectedItemColor: Colors.blue,
-      unselectedItemColor: Colors.grey,
-    );
-  }
-}
-
-class NavigationItem {
-  final Widget icon;
-  final String label;
-
-  NavigationItem({
-    required this.icon,
-    required this.label,
-  });
 }

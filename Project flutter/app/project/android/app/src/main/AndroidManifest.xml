@@ -8,7 +8,10 @@
         android:label="project"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
-        <activity
+
+        <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+        <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
@@ -34,16 +37,21 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+             <meta-data android:name="com.google.android.geo.API_KEY"
+               android:value="d34f0f549e81cb5095d21303c5119c55"/>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility?hl=en and
          https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
 
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
+
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
     </queries>
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
 </manifest>
