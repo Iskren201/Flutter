@@ -1,5 +1,6 @@
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
+import 'package:project/pages/google_maps_page.dart';
 import 'notelist_page.dart';
 import 'weather_page.dart';
 import 'settings_page.dart'; // Import the settings page
@@ -32,6 +33,12 @@ class _HomeState extends State<Home> {
       );
     } else if (index == 3) {
       _logout(context);
+    } else if (index == 4) {
+      // Navigate to Google Maps page
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => GoogleMapComponent()),
+      );
     }
   }
 
@@ -89,6 +96,13 @@ class _HomeState extends State<Home> {
                   label: Text('Settings'),
                   onPressed: () {
                     _navigateTo(2);
+                  },
+                ),
+                ElevatedButton.icon(
+                  icon: Icon(Icons.map),
+                  label: Text('Google Maps'), // Button for Google Maps
+                  onPressed: () {
+                    _navigateTo(4);
                   },
                 ),
                 ElevatedButton.icon(

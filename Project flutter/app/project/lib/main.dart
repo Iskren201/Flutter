@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:project/pages/theme_notifier.dart';
+import 'package:provider/provider.dart';
 
 import 'pages/home_page.dart';
 import 'pages/login_page.dart';
 import 'pages/register_page.dart';
+import 'pages/settings_page.dart';
+import 'pages/change_password_page.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeNotifier(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -13,12 +22,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeNotifier = Provider.of<ThemeNotifier>(context);
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
+      theme: themeNotifier.currentTheme,
       initialRoute: '/login',
       routes: {
         '/login': (context) => LoginPage(),
@@ -27,6 +35,8 @@ class MyApp extends StatelessWidget {
           return Home(username: username);
         },
         '/register': (context) => RegisterPage(),
+        '/settings': (context) => SettingsPage(),
+        '/change_password': (context) => ChangePasswordPage(),
       },
     );
   }

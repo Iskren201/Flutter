@@ -1,30 +1,13 @@
 import 'package:flutter/material.dart';
-
-class ThemeNotifier extends ChangeNotifier {
-  ThemeData _currentTheme;
-  bool _isDarkMode;
-
-  ThemeNotifier()
-      : _isDarkMode = false,
-        _currentTheme = ThemeData.light();
-
-  ThemeData get currentTheme => _currentTheme;
-  bool get isDarkMode => _isDarkMode;
-
-  void toggleTheme(bool isDark) {
-    _isDarkMode = isDark;
-    if (isDark) {
-      _currentTheme = ThemeData.dark();
-    } else {
-      _currentTheme = ThemeData.light();
-    }
-    notifyListeners();
-  }
-}
+import 'package:provider/provider.dart';
+import 'theme_notifier.dart';
+import 'change_password_page.dart';
 
 class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final themeNotifier = Provider.of<ThemeNotifier>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Settings'),
@@ -51,11 +34,13 @@ class SettingsPage extends StatelessWidget {
             ),
             SizedBox(height: 10),
             DropdownButton<String>(
-              value: 'Light', // Change this value according to your app's theme
+              value: themeNotifier.isDarkMode ? 'Dark' : 'Light',
               onChanged: (String? newValue) {
-                // Implement theme change logic here
+                if (newValue != null) {
+                  themeNotifier.toggleTheme(newValue == 'Dark');
+                }
               },
-              items: <String>['Light', 'Dark', 'System'].map((String value) {
+              items: <String>['Light', 'Dark'].map((String value) {
                 return DropdownMenuItem<String>(
                   value: value,
                   child: Text(value),
@@ -64,18 +49,21 @@ class SettingsPage extends StatelessWidget {
             ),
             SizedBox(height: 20),
             Text(
-              'Notifications:',
+              'Change Password:',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SwitchListTile(
-              title: Text('Enable Notifications'),
-              value: true, // Change this value according to user preference
-              onChanged: (bool value) {
-                // Implement notification toggle logic here
+            SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ChangePasswordPage()),
+                );
               },
+              child: Text('Change Password'),
             ),
           ],
         ),
